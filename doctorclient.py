@@ -5,7 +5,7 @@ GUI-based view for client for non-directive psychotherapy.
 
 from socket import *
 from codecs import decode
-#from breezypythongui import EasyFrame
+from breezypythongui import EasyFrame
 
 HOST = "localhost"
 PORT = 5000

@@ -3,7 +3,7 @@ from sharedcell import SharedCell
 
 class ThreadTranscript:
 
-    def __init__(self, address, chats = "Connected"):
+    def __init__(self, address, chats):
         who = Transcript(address, chats)
         self.cell = SharedCell(who)
     

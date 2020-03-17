@@ -3,11 +3,13 @@
 # Form implementation generated from reading ui file 'mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
-#
+# Potek hirap naman neto. hakdog.
 # WARNING! All changes made in this file will be lost!
 from socket import *
 from codecs import decode
 from PyQt5 import QtCore, QtGui, QtWidgets
+import ast
+from threading import Thread
 
 HOST = "localhost"
 PORT = 5000
@@ -18,11 +20,15 @@ CODE = "ascii"
 
 #server.connect(ADDRESS)
 
+
 class Ui_MainWindow(object):
     def __init__(self):
         self.connFlag = 0
+        self.refFlag = 0
         self.greetings = "Welcome to the Chatroom. You have been connected to the server"
         self.server = socket(AF_INET, SOCK_STREAM)
+
+        
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -46,6 +52,7 @@ class Ui_MainWindow(object):
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setObjectName("lineEdit")
         self.lineEdit.setEnabled(False)
+        self.lineEdit.returnPressed.connect(lambda: self.pressedSend())
         self.horizontalLayout_3.addWidget(self.lineEdit)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
@@ -79,30 +86,63 @@ class Ui_MainWindow(object):
 
     def pressedConn(self):
         if self.connFlag == 0:
-            self.server.connect(ADDRESS)
-            self.textBrowser.append(decode(self.server.recv(BUFSIZE), CODE))
-            self.btnSend.setEnabled(True)
-            self.label.setEnabled(True)
-            self.lineEdit.setEnabled(True)
-            self.btnConn.setText("Disconnect")
-            self.connFlag = 1
+            try:
+                self.server.connect(ADDRESS)
+                #self.textBrowser.append(decode(self.server.recv(BUFSIZE), CODE))
+                self.lblTitle.setText("Currently Connected")
+                self.btnSend.setEnabled(True)
+                self.label.setEnabled(True)
+                self.lineEdit.setEnabled(True)
+                self.btnConn.setText("Disconnect")
+                self.connFlag = 1
+                self.textBrowser.clear()
+                #self.pressedSend()
+                self.windowRefresh()
+                #Thread(target=self.windowRefresh, daemon=True).start()
+            except Exception as ex:
+                print(ex)
         else:
             #self.textBrowser.append(decode(self.server.recv(BUFSIZE), CODE))
+            self.server.send(bytes("Disconnected", CODE))
+            self.textBrowser.clear()
+            self.windowRefresh()
             self.server.close()
             self.server = socket(AF_INET, SOCK_STREAM)
             self.btnSend.setEnabled(False)
             self.label.setEnabled(False)
+            self.lblTitle.setText("Want To Connect?")
             self.lineEdit.setEnabled(False)
             self.btnConn.setText("Connect")
-            self.textBrowser.append("You've disconnected to the chat room")
+            #self.textBrowser.append("You've disconnected to the chat room")
             self.connFlag = 0
+            #Thread.exit()
         
     def pressedSend(self):
         #print("Message: %s" % self.lineEdit.text())
         #self.textBrowser.append("From: %s" % self.lineEdit.text())
-        self.server.send(bytes(self.lineEdit.text(), CODE))
-        self.textBrowser.append(decode(self.server.recv(BUFSIZE), CODE))
-        self.lineEdit.setText("")
+        if self.lineEdit.text() == "":
+            pass
+        else:
+            self.server.send(bytes(self.lineEdit.text(), CODE))
+            #for i in range(decode(self.server.recv(BUFSIZE), CODE))
+            #print(message)
+            #self.textBrowser.append(decode(self.server.recv(BUFSIZE), CODE))
+            self.textBrowser.clear()
+            self.lineEdit.setText("")
+            self.windowRefresh()
+    
+    def windowRefresh(self):
+        message = ast.literal_eval(decode(self.server.recv(BUFSIZE), CODE))
+        # if self.refFlag == 0:
+        #     self.textBrowser.append("%s: %s" % (message[0][0], message[0][1]))
+        # else:
+            #print(decode(self.server.recv(BUFSIZE), CODE) )
+            #type(message)
+            #self.textBrowser.clear()
+        for i in range(len(message)):
+            if message != []:
+                self.textBrowser.append("%s: %s" % (message[i][0], message[i][1]))
+
 
 if __name__ == "__main__":
     import sys
@@ -110,6 +150,6 @@ if __name__ == "__main__":
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
+    #Thread(target = ui.windowRefresh, daemon=True).start()
     MainWindow.show()
     sys.exit(app.exec_())
-
